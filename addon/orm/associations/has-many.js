@@ -136,11 +136,13 @@ export default class HasMany extends Association {
 
         this._tempAssociations[key] = new Collection(association.modelName, models);
 
-        if (association.inverse())  {
-          models.forEach(model => {
-            model.associate(this, association.inverse());
-          });
-        }
+        models.forEach(model => {
+          if (model.hasInverseFor(this.modelName, association)) {
+            let inverse = model.inverseFor(this.modelName, association);
+
+            model.associate(this, inverse);
+          }
+        });
       }
     });
 
@@ -165,7 +167,10 @@ export default class HasMany extends Association {
     modelPrototype[`create${capitalize(camelize(singularize(association.key)))}`] = function(attrs = {}) {
       let child = association.schema[toCollectionName(association.modelName)].create(attrs);
 
-      // this[key].add(child);
+      // this[key].add(child); TODO: forget why this doesn't work, most likely
+      // because these external APIs trigger saving cascades. Should probably
+      // have an internal method like this[key]._add.
+
       let children = this[key].models;
       children.push(child);
       this[key] = children;
