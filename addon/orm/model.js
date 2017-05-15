@@ -192,8 +192,8 @@ class Model {
            post: belongsTo()
          })
 
-     post.inversefor('comment', commentsAssociation) would return the
-     `comment.post` association object.
+     post.inversefor('comment', productsAssociation) would return the
+     `post.comments` association object.
 
      Originally we had association.inverse() but that became impossible with
      the addition of polymorphic models. Consider the following:
@@ -215,7 +215,7 @@ class Model {
    *
    *
    * @method hasInverseFor
-   * @param {String} modelName
+   * @param {String} modelName The model name of the class we're scanning
    * @param {ORM/Association} association
    * @return {ORM/Association}
    * @public
@@ -301,6 +301,7 @@ class Model {
     let fk = association.getForeignKey();
 
     if (association.constructor.name === 'HasMany') {
+      debugger;
       let i = this[fk].map(key => key.toString()).indexOf(model.id.toString());
       if (i > -1) {
         this.attrs[fk].splice(i, 1);
@@ -494,41 +495,57 @@ class Model {
     let { key } = association;
     let fk = association.getForeignKey();
     let tempAssociation = this._tempAssociations && this._tempAssociations[key];
-    let oldInversesExist = this.attrs[fk];
+    let associateIds = this.attrs[fk];
 
-    if (tempAssociation && oldInversesExist) {
+    if (tempAssociation && associateIds) {
       // Disassociate currently persisted models that are no longer associated
       this._schema[toCollectionName(association.modelName)]
-        .find(this.attrs[fk] || []) // TODO: prob should initialize hasMany fks with []
+        .find(associateIds || []) // TODO: prob should initialize hasMany fks with []
         .models
-        .filter(model => !tempAssociation.includes(model)) // filter out models that will still be associated
-        .forEach(model => {
-          if (this.hasInverseFor(model.modelName, association)) {
-            let inverse = this.inverseFor(model.modelName, association);
+        .filter(associate => !tempAssociation.includes(associate)) // filter out models that will still be associated
+        .forEach(associate => {
+          if (associate.hasInverseFor(this.modelName, association)) {
+            let inverse = associate.inverseFor(this.modelName, association);
 
-            model.disassociate(this, inverse);
-            model.save();
+            associate.disassociate(this, inverse);
+            associate.save();
           }
         });
     }
   }
 
+  /*
+    Disassociate currently persisted models that are no longer associated.
+
+    Example:
+
+      post: Model.extend({
+        comments: hasMany()
+      }),
+
+      comment: Model.extend({
+        post: belongsTo()
+      })
+
+    Assume `this` is comment:1. When saving, if comment:1 is no longer
+    associated with post:1, we need to remove comment:1 from post:1.comments.
+    In this example `association` would be `comment.post`.
+  */
   _disassociateFromBelongsToInverse(association) {
     let { key } = association;
     let fk = association.getForeignKey();
     let tempAssociation = this._tempAssociations && this._tempAssociations[key];
-    let oldInverses = this.attrs[fk];
+    let associateId = this.attrs[fk];
 
-    if ((tempAssociation !== undefined) && oldInverses) {
-      // Disassociate currently persisted models that are no longer associated
-      let model = this._schema[toCollectionName(association.modelName)]
-        .find(oldInverses);
+    if ((tempAssociation !== undefined) && associateId) {
+      let associate = this._schema[toCollectionName(association.modelName)]
+        .find(associateId);
 
-      if (this.hasInverseFor(model.modelName, association)) {
-        let inverse = this.inverseFor(model.modelName, association);
+      if (associate.hasInverseFor(this.modelName, association)) {
+        let inverse = associate.inverseFor(this.modelName, association);
 
-        model.disassociate(this, inverse);
-        model._updateInDb(model.attrs);
+        associate.disassociate(this, inverse);
+        associate._updateInDb(associate.attrs);
       }
     }
   }
