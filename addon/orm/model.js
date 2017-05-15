@@ -597,9 +597,6 @@ class Model {
           this._schema.db[toCollectionName(association.modelName)]
             .update(this[fk], { [inverseFk]: this.id });
         }
-
-      } else if (modelOrCollection instanceof Collection) {
-        // TODO: delete?
       }
     }
   }
@@ -630,19 +627,11 @@ class Model {
               inverseCollection.update(model.id, { [inverseFk]: newIdsForInverse });
             }
           });
+
+        // Since we updated the db directly, the cached version of this
+        // association is out of date. So we delete it.
+        delete this._tempAssociations[association.key];
       }
-      // TODO: delete?
-      // } else if (inverse && (inverse.constructor.name === 'BelongsTo') && !this.__isSavingNewChildren) {
-      // this._schema[toCollectionName(association.modelName)]
-      //   .find(this[fk])
-      //   .models
-      //   .forEach(model => {
-      //     let inverseFk = inverse.getForeignKey();
-      //     let ownerId = this.id;
-      //     let inverseCollection = this._schema.db[toCollectionName(model.modelName)];
-      //
-      //     inverseCollection.update(model.id, { [inverseFk]: ownerId });
-      //   });
     }
   }
 
