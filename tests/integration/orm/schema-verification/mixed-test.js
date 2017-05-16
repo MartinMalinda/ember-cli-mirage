@@ -31,7 +31,7 @@ test('unnamed one-to-many associations are correct', function(assert) {
 
   let post = schema.blogPosts.find(1);
 
-  assert.deepEqual(post.inverseFor('word-smith', association), post.associationFor('wordSmith'));
+  assert.deepEqual(post.inverseFor(association), post.associationFor('wordSmith'));
 });
 
 test('a named one-to-many association is correct', function(assert) {
@@ -60,7 +60,7 @@ test('a named one-to-many association is correct', function(assert) {
 
   let post = schema.blogPosts.find(1);
 
-  assert.deepEqual(post.inverseFor('word-smith', association), post.associationFor('author'));
+  assert.deepEqual(post.inverseFor(association), post.associationFor('author'));
 });
 
 test('multiple has-many associations of the same type', function(assert) {
@@ -91,7 +91,7 @@ test('multiple has-many associations of the same type', function(assert) {
 
   let post = schema.posts.find(1);
 
-  assert.deepEqual(post.inverseFor('user', notesAssociation), post.associationFor('author'));
+  assert.deepEqual(post.inverseFor(notesAssociation), post.associationFor('author'));
 
   let messagesAssociation = frodo.associationFor('messages');
 
@@ -99,7 +99,7 @@ test('multiple has-many associations of the same type', function(assert) {
   assert.equal(messagesAssociation.modelName, 'post');
   assert.equal(messagesAssociation.ownerModelName, 'user');
 
-  assert.deepEqual(post.inverseFor('user', messagesAssociation), post.associationFor('messenger'));
+  assert.deepEqual(post.inverseFor(messagesAssociation), post.associationFor('messenger'));
 });
 
 test('one-to-many reflexive association is correct', function(assert) {
@@ -121,5 +121,5 @@ test('one-to-many reflexive association is correct', function(assert) {
   assert.equal(parentAssociation.modelName, 'user');
   assert.equal(parentAssociation.ownerModelName, 'user');
 
-  assert.deepEqual(frodo.inverseFor('user', parentAssociation), frodo.associationFor('children'));
+  assert.deepEqual(frodo.inverseFor(parentAssociation), frodo.associationFor('children'));
 });

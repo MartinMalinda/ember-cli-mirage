@@ -29,7 +29,7 @@ test('a one-way has many association is correct', function(assert) {
 
   let post = schema.posts.find(1);
 
-  assert.ok(post.inverseFor('user', association) === null, 'there is no inverse');
+  assert.ok(post.inverseFor(association) === null, 'there is no inverse');
 });
 
 test('a named one-way has many association is correct', function(assert) {
@@ -56,7 +56,7 @@ test('a named one-way has many association is correct', function(assert) {
 
   let post = schema.posts.find(1);
 
-  assert.ok(post.inverseFor('user', association) === null, 'there is no inverse');
+  assert.ok(post.inverseFor(association) === null, 'there is no inverse');
 });
 
 test('a reflexive hasMany association with an implicit inverse is correct', function(assert) {
@@ -77,5 +77,5 @@ test('a reflexive hasMany association with an implicit inverse is correct', func
   assert.equal(association.modelName, 'tag');
   assert.equal(association.ownerModelName, 'tag');
 
-  assert.ok(tag.inverseFor('tag', association) === association, 'the implicit inverse was found');
+  assert.ok(tag.inverseFor(association) === association, 'the implicit inverse was found');
 });

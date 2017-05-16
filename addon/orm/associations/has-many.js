@@ -137,8 +137,8 @@ export default class HasMany extends Association {
         this._tempAssociations[key] = new Collection(association.modelName, models);
 
         models.forEach(model => {
-          if (model.hasInverseFor(this.modelName, association)) {
-            let inverse = model.inverseFor(this.modelName, association);
+          if (model.hasInverseFor(association)) {
+            let inverse = model.inverseFor(association);
 
             model.associate(this, inverse);
           }

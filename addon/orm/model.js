@@ -220,8 +220,9 @@ class Model {
    * @return {ORM/Association}
    * @public
    */
-  inverseFor(modelName, association) {
+  inverseFor(association) {
     let associations = this._schema.associationsFor(this.modelName);
+    let modelName = association.ownerModelName;
 
     let theInverse = _values(associations)
       .filter(candidate => candidate.modelName === modelName)
@@ -254,8 +255,8 @@ class Model {
    * @return {Boolean}
    * @public
    */
-  hasInverseFor(modelName, association) {
-    return !!this.inverseFor(modelName, association);
+  hasInverseFor(association) {
+    return !!this.inverseFor(association);
   }
 
   /**
@@ -504,8 +505,8 @@ class Model {
         .models
         .filter(associate => !tempAssociation.includes(associate)) // filter out models that will still be associated
         .forEach(associate => {
-          if (associate.hasInverseFor(this.modelName, association)) {
-            let inverse = associate.inverseFor(this.modelName, association);
+          if (associate.hasInverseFor(association)) {
+            let inverse = associate.inverseFor(association);
 
             associate.disassociate(this, inverse);
             associate.save();
@@ -541,8 +542,8 @@ class Model {
       let associate = this._schema[toCollectionName(association.modelName)]
         .find(associateId);
 
-      if (associate.hasInverseFor(this.modelName, association)) {
-        let inverse = associate.inverseFor(this.modelName, association);
+      if (associate.hasInverseFor(association)) {
+        let inverse = associate.inverseFor(association);
 
         associate.disassociate(this, inverse);
         associate._updateInDb(associate.attrs);
@@ -620,8 +621,8 @@ class Model {
   }
 
   _associateModelWithInverse(model, association) {
-    if (model.hasInverseFor(this.modelName, association)) {
-      let inverse = model.inverseFor(this.modelName, association);
+    if (model.hasInverseFor(association)) {
+      let inverse = model.inverseFor(association);
       let inverseFk = inverse.getForeignKey();
 
       if (inverse.constructor.name === 'BelongsTo') {

@@ -27,7 +27,7 @@ test('a one-way belongsTo association is correct', function(assert) {
   assert.equal(association.key, 'author');
   assert.equal(association.modelName, 'author');
   assert.equal(association.ownerModelName, 'post');
-  assert.ok(frodo.inverseFor('post', association) === null, 'there is no inverse');
+  assert.ok(frodo.inverseFor(association) === null, 'there is no inverse');
 });
 
 test('a one-way named belongsTo association is correct', function(assert) {
@@ -52,7 +52,7 @@ test('a one-way named belongsTo association is correct', function(assert) {
   assert.equal(association.key, 'author');
   assert.equal(association.modelName, 'user');
   assert.equal(association.ownerModelName, 'post');
-  assert.ok(frodo.inverseFor('author', association) === null, 'there is no inverse');
+  assert.ok(frodo.inverseFor(association) === null, 'there is no inverse');
 });
 
 test('a reflexive belongsTo association is correct and has an implicit inverse', function(assert) {
@@ -72,7 +72,7 @@ test('a reflexive belongsTo association is correct and has an implicit inverse',
   assert.equal(association.key, 'user');
   assert.equal(association.modelName, 'user');
   assert.equal(association.ownerModelName, 'user');
-  assert.ok(frodo.inverseFor('user', association) === association, 'the implicit inverse was found');
+  assert.ok(frodo.inverseFor(association) === association, 'the implicit inverse was found');
 });
 
 test('a named reflexive belongsTo association with an implicit inverse is correct', function(assert) {
@@ -92,7 +92,7 @@ test('a named reflexive belongsTo association with an implicit inverse is correc
   assert.equal(association.key, 'bestFriend');
   assert.equal(association.modelName, 'user');
   assert.equal(association.ownerModelName, 'user');
-  assert.ok(frodo.inverseFor('user', association) === association, 'the implicit inverse was found');
+  assert.ok(frodo.inverseFor(association) === association, 'the implicit inverse was found');
 });
 
 test('a named reflexive belongsTo association with an explicit inverse is correct', function(assert) {
@@ -112,7 +112,7 @@ test('a named reflexive belongsTo association with an explicit inverse is correc
   assert.equal(association.key, 'bestFriend');
   assert.equal(association.modelName, 'user');
   assert.equal(association.ownerModelName, 'user');
-  assert.ok(frodo.inverseFor('user', association) === association, 'the explicit inverse was found');
+  assert.ok(frodo.inverseFor(association) === association, 'the explicit inverse was found');
 });
 
 test('a one-way reflexive belongsTo association with a null inverse is correct', function(assert) {
@@ -132,7 +132,7 @@ test('a one-way reflexive belongsTo association with a null inverse is correct',
   assert.equal(association.key, 'user');
   assert.equal(association.modelName, 'user');
   assert.equal(association.ownerModelName, 'user');
-  assert.ok(frodo.inverseFor('user', association) === null, 'there is no inverse');
+  assert.ok(frodo.inverseFor(association) === null, 'there is no inverse');
 });
 
 test('a named one-way way reflexive belongsTo association with a null inverse is correct', function(assert) {
@@ -152,7 +152,7 @@ test('a named one-way way reflexive belongsTo association with a null inverse is
   assert.equal(association.key, 'parent');
   assert.equal(association.modelName, 'user');
   assert.equal(association.ownerModelName, 'user');
-  assert.ok(frodo.inverseFor('user', association) === null, 'there is no inverse');
+  assert.ok(frodo.inverseFor(association) === null, 'there is no inverse');
 });
 
 test('a one-to-one belongsTo association with an implicit inverse is correct', function(assert) {
@@ -180,7 +180,7 @@ test('a one-to-one belongsTo association with an implicit inverse is correct', f
   assert.equal(association.ownerModelName, 'profile');
 
   let frodo = schema.users.find(1);
-  let inverse = frodo.inverseFor('profile', association);
+  let inverse = frodo.inverseFor(association);
 
   assert.equal(inverse.key, 'profile');
   assert.equal(inverse.modelName, 'profile');
