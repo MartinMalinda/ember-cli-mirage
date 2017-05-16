@@ -192,7 +192,7 @@ class Model {
            post: belongsTo()
          })
 
-     post.inversefor('comment', productsAssociation) would return the
+     post.inversefor('comment', postAssociation) would return the
      `post.comments` association object.
 
      Originally we had association.inverse() but that became impossible with
