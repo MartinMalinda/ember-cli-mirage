@@ -192,7 +192,7 @@ class Model {
            post: belongsTo()
          })
 
-     post.inversefor('comment', postAssociation) would return the
+     post.inversefor(commentsPostAssociation) would return the
      `post.comments` association object.
 
      Originally we had association.inverse() but that became impossible with
@@ -208,10 +208,10 @@ class Model {
            commentable: belongsTo({ polymorphic: true })
          })
 
-     `comment.commentable.inverse()` is ambiguous - does it return
-     `post.comments` or `picture.comments`? Instead you need the type you're
-     looking for. `comment.inverseFor('post', comment.commentable)` is no
-     longer ambiguous.
+     `commentable.inverse()` is ambiguous - does it return
+     `post.comments` or `picture.comments`? Instead we need to ask each model
+     if it has an inverse for a given association. post.inverseFor(commentable)
+     is no longer ambiguous.
    *
    *
    * @method hasInverseFor
