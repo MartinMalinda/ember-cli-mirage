@@ -604,104 +604,44 @@ class Model {
   _associateWithNewInverses(association) {
     if (!this.__isSavingNewChildren) {
       let modelOrCollection = this[association.key];
-      let fk = association.getForeignKey();
 
       if (modelOrCollection instanceof Model) {
-        // Check if model has inverse
-        // If it does, associate it
-        if (modelOrCollection.hasInverseFor(this.modelName, association)) {
-          let inverse = modelOrCollection.inverseFor(this.modelName, association);
-          let inverseFk = inverse.getForeignKey();
-
-          if (inverse.constructor.name === 'BelongsTo') {
-            this._schema.db[toCollectionName(association.modelName)]
-              .update(this[fk], { [inverseFk]: this.id });
-          } else {
-            let ownerId = this.id;
-            let inverseCollection = this._schema.db[toCollectionName(modelOrCollection.modelName)];
-            let currentIdsForInverse = inverseCollection.find(modelOrCollection.id)[inverse.getForeignKey()] || [];
-            let newIdsForInverse = currentIdsForInverse;
-
-            if (newIdsForInverse.indexOf(ownerId) === -1) {
-              newIdsForInverse.push(ownerId);
-            }
-
-            inverseCollection.update(modelOrCollection.id, { [inverseFk]: newIdsForInverse });
-          }
-        }
+        this._associateModelWithInverse(modelOrCollection, association);
 
       } else if (modelOrCollection instanceof Collection) {
-        // Loop through collection. For each model,
-        // check if model has inverse
-        // If it does, associate it
-        this._schema[toCollectionName(association.modelName)]
-          .find(this[fk])
-          .models
+        modelOrCollection.models
           .forEach(model => {
-            if (model.hasInverseFor(this.modelName, association)) {
-              let inverse = model.inverseFor(this.modelName, association);
-              let inverseFk = inverse.getForeignKey();
-
-              if (inverse.constructor.name === 'BelongsTo') {
-                this._schema.db[toCollectionName(association.modelName)]
-                  .update(this[fk], { [inverseFk]: this.id });
-              } else {
-                let ownerId = this.id;
-                let inverseCollection = this._schema.db[toCollectionName(model.modelName)];
-                let currentIdsForInverse = inverseCollection.find(model.id)[inverse.getForeignKey()] || [];
-                let newIdsForInverse = currentIdsForInverse;
-
-                if (newIdsForInverse.indexOf(ownerId) === -1) {
-                  newIdsForInverse.push(ownerId);
-                }
-
-                inverseCollection.update(model.id, { [inverseFk]: newIdsForInverse });
-              }
-            }
+            this._associateModelWithInverse(model, association);
           });
       }
 
       delete this._tempAssociations[association.key];
-
-      // Original
-      // if (inverse.constructor.name === 'BelongsTo') {
-      //   if (modelOrCollection.hasInverseFor(this.modelName, association)) {
-      //     let inverse = modelOrCollection.inverseFor(this.modelName, association);
-      //     let inverseFk = inverse.getForeignKey();
-      //
-      //     this._schema.db[toCollectionName(association.modelName)]
-      //       .update(this[fk], { [inverseFk]: this.id });
-      //   }
-      //
-      // } else {
-      //   this._schema[toCollectionName(association.modelName)]
-      //     .find(this[fk])
-      //     .models
-      //     .forEach(model => {
-      //       if (model.hasInverseFor(this.modelName, association)) {
-      //         let inverse = model.inverseFor(this.modelName, association);
-      //         let inverseFk = inverse.getForeignKey();
-      //         let ownerId = this.id;
-      //         let inverseCollection = this._schema.db[toCollectionName(model.modelName)];
-      //         let currentIdsForInverse = inverseCollection.find(model.id)[inverse.getForeignKey()] || [];
-      //         let newIdsForInverse = currentIdsForInverse;
-      //
-      //         if (newIdsForInverse.indexOf(ownerId) === -1) {
-      //           newIdsForInverse.push(ownerId);
-      //         }
-      //
-      //         inverseCollection.update(model.id, { [inverseFk]: newIdsForInverse });
-      //       }
-      //     });
-      //
-      //   // Since we updated the db directly, the cached version of this
-      //   // association is out of date. So we delete it.
-      //   delete this._tempAssociations[association.key];
-      // }
     }
   }
 
-  // _associateModelWithInverse
+  _associateModelWithInverse(model, association) {
+    if (model.hasInverseFor(this.modelName, association)) {
+      let inverse = model.inverseFor(this.modelName, association);
+      let inverseFk = inverse.getForeignKey();
+
+      if (inverse.constructor.name === 'BelongsTo') {
+        this._schema.db[toCollectionName(association.modelName)]
+          .update(model.id, { [inverseFk]: this.id });
+
+      } else {
+        let ownerId = this.id;
+        let inverseCollection = this._schema.db[toCollectionName(model.modelName)];
+        let currentIdsForInverse = inverseCollection.find(model.id)[inverse.getForeignKey()] || [];
+        let newIdsForInverse = currentIdsForInverse;
+
+        if (newIdsForInverse.indexOf(ownerId) === -1) {
+          newIdsForInverse.push(ownerId);
+        }
+
+        inverseCollection.update(model.id, { [inverseFk]: newIdsForInverse });
+      }
+    }
+  }
 
   // Used to update data directly, since #save and #update can retrigger saves,
   // which can cause cycles with associations.
