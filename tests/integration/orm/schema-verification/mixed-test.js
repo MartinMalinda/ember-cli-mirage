@@ -116,7 +116,7 @@ test('one-to-many reflexive association is correct', function(assert) {
 
   let frodo = schema.users.find(1);
   let parentAssociation = frodo.associationFor('parent');
-  
+
   assert.equal(parentAssociation.key, 'parent');
   assert.equal(parentAssociation.modelName, 'user');
   assert.equal(parentAssociation.ownerModelName, 'user');

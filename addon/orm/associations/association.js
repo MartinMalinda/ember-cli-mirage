@@ -1,4 +1,3 @@
-import Model from '../model';
 import { dasherize } from 'ember-cli-mirage/utils/inflector';
 
 export default class Association {

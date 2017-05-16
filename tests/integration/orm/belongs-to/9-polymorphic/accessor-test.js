@@ -1,5 +1,5 @@
 import Helper, { states } from './_helper';
-import { module, test, skip } from 'qunit';
+import { module, skip } from 'qunit';
 
 module('Integration | ORM | Belongs To | Polymorphic | accessor', {
   beforeEach() {
