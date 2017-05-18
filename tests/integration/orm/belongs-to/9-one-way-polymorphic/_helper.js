@@ -17,14 +17,10 @@ export default class BelongsToHelper {
 
   constructor() {
     this.db = new Db();
+    this.loadData = this.db.loadData.bind(this.db);
 
     this.schema = new Schema(this.db, {
-      post: Model.extend({
-        // comments: hasMany()
-      }),
-      image: Model.extend({
-        // comments: hasMany()
-      }),
+      post: Model.extend(),
       comment: Model.extend({
         commentable: belongsTo('commentable', { polymorphic: true })
       })
@@ -38,8 +34,13 @@ export default class BelongsToHelper {
   }
 
   savedChildNewParent() {
-    let insertedComment = this.db.comments.insert({ text: 'Lorem' });
-    let comment = this.schema.comments.find(insertedComment.id);
+    this.loadData({
+      comments: [
+        { id: '1', text: 'Lorem' }
+      ]
+    });
+
+    let comment = this.schema.comments.find(1);
     let post = this.schema.posts.new({ title: 'Bob' });
 
     comment.commentable = post;
@@ -48,10 +49,17 @@ export default class BelongsToHelper {
   }
 
   savedChildSavedParent() {
-    let insertedAuthor = this.db.posts.insert({ title: 'Bob' });
-    let insertedComment = this.db.comments.insert({ text: 'Lorem', postId: insertedAuthor.id });
-    let comment = this.schema.comments.find(insertedComment.id);
-    let post = this.schema.posts.find(insertedAuthor.id);
+    this.loadData({
+      posts: [
+        { id: '1', title: 'Lorem ipsum' }
+      ],
+      comments: [
+        { id: '1', text: 'Trolling', commentableId: { id: '1', type: 'post' } }
+      ]
+    });
+
+    let comment = this.schema.comments.find(1);
+    let post = this.schema.posts.find(1);
 
     return [ comment, post ];
   }
@@ -62,27 +70,31 @@ export default class BelongsToHelper {
 
   newChildNewParent() {
     let comment = this.schema.comments.new({ text: 'Lorem' });
-    let newAuthor = this.schema.posts.new({ title: 'Bob' });
-    comment.commentable = newAuthor;
+    let newPost = this.schema.posts.new({ title: 'Bob' });
+    comment.commentable = newPost;
 
-    return [ comment, newAuthor ];
+    return [ comment, newPost ];
   }
 
   newChildSavedParent() {
-    let insertedAuthor = this.db.posts.insert({ title: 'Bob' });
+    this.loadData({
+      posts: [
+        { id: '1', title: 'Lorem ipsum' }
+      ]
+    });
     let comment = this.schema.comments.new({ text: 'Lorem' });
-    let savedAuthor = this.schema.posts.find(insertedAuthor.id);
+    let savedPost = this.schema.posts.find(1);
 
-    comment.commentable = savedAuthor;
+    comment.commentable = savedPost;
 
-    return [ comment, savedAuthor ];
+    return [ comment, savedPost ];
   }
 
   // Just a saved unassociated parent.
   savedParent() {
-    let insertedAuthor = this.db.posts.insert({ title: 'Bob' });
+    let insertedPost = this.db.posts.insert({ title: 'Bob' });
 
-    return this.schema.posts.find(insertedAuthor.id);
+    return this.schema.posts.find(insertedPost.id);
   }
 
   newParent() {
@@ -93,9 +105,9 @@ export default class BelongsToHelper {
 
 export const states = [
   'savedChildNoParent',
-  'savedChildNewParent'
-  // 'savedChildSavedParent',
-  // 'newChildNoParent',
-  // 'newChildNewParent',
-  // 'newChildSavedParent'
+  'savedChildNewParent',
+  'savedChildSavedParent',
+  'newChildNoParent',
+  'newChildNewParent',
+  'newChildSavedParent'
 ];

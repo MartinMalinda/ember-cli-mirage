@@ -446,13 +446,18 @@ class Model {
       assert(found.length === foreignKeys.length, `You're instantiating a ${this.modelName} that has a ${foreignKeyName} of ${foreignKeys}, but some of those records don't exist in the database.`);
 
     } else {
-      // debugger;
-      let associationModelName = Object.keys(this.belongsToAssociations)
+      let association = Object.keys(this.belongsToAssociations)
         .map(key => this.belongsToAssociations[key])
-        .filter(association => association.getForeignKey() === foreignKeyName)[0]
-        .modelName;
+        .filter(association => association.getForeignKey() === foreignKeyName)[0];
 
-      let found = this._schema.db[toCollectionName(associationModelName)].find(foreignKeys);
+      let found;
+      if (association.isPolymorphic) {
+        found = this._schema.db[toCollectionName(foreignKeys.type)].find(foreignKeys.id);
+      } else {
+        found = this._schema.db[toCollectionName(association.modelName)].find(foreignKeys);
+      }
+
+      foreignKeys = association.isPolymorphic ? `${foreignKeys.type}:${foreignKeys.id}` : foreignKeys;
       assert(found, `You're instantiating a ${this.modelName} that has a ${foreignKeyName} of ${foreignKeys}, but that record doesn't exist in the database.`);
     }
   }
@@ -539,8 +544,14 @@ class Model {
     let associateId = this.attrs[fk];
 
     if ((tempAssociation !== undefined) && associateId) {
-      let associate = this._schema[toCollectionName(association.modelName)]
-        .find(associateId);
+      let associate;
+      if (association.isPolymorphic) {
+        associate = this._schema[toCollectionName(associateId.type)]
+          .find(associateId.id);
+      } else {
+        associate = this._schema[toCollectionName(association.modelName)]
+          .find(associateId);
+      }
 
       if (associate.hasInverseFor(association)) {
         let inverse = associate.inverseFor(association);
@@ -552,7 +563,7 @@ class Model {
   }
 
   _disassociateFromDependents() {
-    _values(this._schema.dependentAssociationsFor(this.modelName))
+    this._schema.dependentAssociationsFor(this.modelName)
       .forEach(association => {
         association.disassociateAllDependentsFromTarget(this);
       });
@@ -579,7 +590,15 @@ class Model {
           this._updateInDb({ [fk]: null });
         } else {
           tempAssociate.save();
-          this._updateInDb({ [fk]: tempAssociate.id });
+
+          let fkValue;
+          if (association.isPolymorphic) {
+            fkValue = { id: tempAssociate.id, type: tempAssociate.modelName};
+          } else {
+            fkValue = tempAssociate.id;
+          }
+
+          this._updateInDb({ [fk]: fkValue });
         }
       }
 
