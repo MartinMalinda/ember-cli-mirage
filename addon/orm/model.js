@@ -2,7 +2,9 @@ import { toCollectionName } from 'ember-cli-mirage/utils/normalize-name';
 import extend from '../utils/extend';
 import assert from '../assert';
 import Collection from './collection';
+import PolymorphicCollection from './polymorphic-collection';
 import _values from 'lodash/values';
+import _compact from 'lodash/compact';
 
 /*
   The Model class. Notes:
@@ -302,7 +304,14 @@ class Model {
     let fk = association.getForeignKey();
 
     if (association.constructor.name === 'HasMany') {
-      let i = this[fk].map(key => key.toString()).indexOf(model.id.toString());
+      let i;
+      if (association.isPolymorphic) {
+        let found = this[fk].find(({ type, id }) => (type === model.modelName && id === model.id));
+        i = found && this[fk].indexOf(found);
+      } else {
+        i = this[fk].map(key => key.toString()).indexOf(model.id.toString());
+      }
+
       if (i > -1) {
         this.attrs[fk].splice(i, 1);
       }
@@ -437,13 +446,22 @@ class Model {
    */
   _validateForeignKeyExistsInDatabase(foreignKeyName, foreignKeys) {
     if (Array.isArray(foreignKeys)) {
-      let associationModelName = Object.keys(this.hasManyAssociations)
+      let association = Object.keys(this.hasManyAssociations)
         .map(key => this.hasManyAssociations[key])
-        .filter(association => association.getForeignKey() === foreignKeyName)[0]
-        .modelName;
+        .filter(association => association.getForeignKey() === foreignKeyName)[0];
 
-      let found = this._schema.db[toCollectionName(associationModelName)].find(foreignKeys);
-      assert(found.length === foreignKeys.length, `You're instantiating a ${this.modelName} that has a ${foreignKeyName} of ${foreignKeys}, but some of those records don't exist in the database.`);
+      let found;
+      if (association.isPolymorphic) {
+        found = foreignKeys.map(({ type, id }) => {
+          return this._schema.db[toCollectionName(type)].find(id);
+        });
+        found = _compact(found);
+      } else {
+        found = this._schema.db[toCollectionName(association.modelName)].find(foreignKeys);
+      }
+
+      let foreignKeyLabel = association.isPolymorphic ? foreignKeys.map(fk => `${fk.type}:${fk.id}`).join(',') : foreignKeys;
+      assert(found.length === foreignKeys.length, `You're instantiating a ${this.modelName} that has a ${foreignKeyName} of ${foreignKeyLabel}, but some of those records don't exist in the database.`);
 
     } else {
       let association = Object.keys(this.belongsToAssociations)
@@ -457,8 +475,8 @@ class Model {
         found = this._schema.db[toCollectionName(association.modelName)].find(foreignKeys);
       }
 
-      foreignKeys = association.isPolymorphic ? `${foreignKeys.type}:${foreignKeys.id}` : foreignKeys;
-      assert(found, `You're instantiating a ${this.modelName} that has a ${foreignKeyName} of ${foreignKeys}, but that record doesn't exist in the database.`);
+      let foreignKeyLabel = association.isPolymorphic ? `${foreignKeys.type}:${foreignKeys.id}` : foreignKeys;
+      assert(found, `You're instantiating a ${this.modelName} that has a ${foreignKeyName} of ${foreignKeyLabel}, but that record doesn't exist in the database.`);
     }
   }
 
@@ -497,6 +515,7 @@ class Model {
     }
   }
 
+  // Disassociate currently persisted models that are no longer associated
   _disassociateFromHasManyInverses(association) {
     let { key } = association;
     let fk = association.getForeignKey();
@@ -504,10 +523,19 @@ class Model {
     let associateIds = this.attrs[fk];
 
     if (tempAssociation && associateIds) {
-      // Disassociate currently persisted models that are no longer associated
-      this._schema[toCollectionName(association.modelName)]
-        .find(associateIds || []) // TODO: prob should initialize hasMany fks with []
-        .models
+      let models;
+      if (association.isPolymorphic) {
+        models = associateIds.map(({ type, id }) => {
+          return this._schema[toCollectionName(type)].find(id);
+        });
+      } else {
+        // TODO: prob should initialize hasMany fks with []
+        models = this._schema[toCollectionName(association.modelName)]
+          .find(associateIds || [])
+          .models;
+      }
+
+      models
         .filter(associate => !tempAssociation.includes(associate)) // filter out models that will still be associated
         .forEach(associate => {
           if (associate.hasInverseFor(association)) {
@@ -562,6 +590,7 @@ class Model {
     }
   }
 
+  // Find all other models that depend on me and update their foreign keys
   _disassociateFromDependents() {
     this._schema.dependentAssociationsFor(this.modelName)
       .forEach(association => {
@@ -584,6 +613,17 @@ class Model {
         });
 
         this._updateInDb({ [fk]: tempAssociate.models.map(child => child.id) });
+      } else if (tempAssociate instanceof PolymorphicCollection) {
+        tempAssociate.models.forEach(child => {
+          child.save();
+        });
+
+        this._updateInDb({
+          [fk]: tempAssociate.models.map(child => {
+            return { type: child.modelName, id: child.id };
+          })
+        });
+
       } else {
 
         if (tempAssociate === null) {
