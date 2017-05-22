@@ -685,7 +685,7 @@ class Model {
       let inverseFk = inverse.getForeignKey();
 
       if (inverse.constructor.name === 'BelongsTo') {
-        this._schema.db[toCollectionName(association.modelName)]
+        this._schema.db[toCollectionName(model.modelName)]
           .update(model.id, { [inverseFk]: this.id });
 
       } else {

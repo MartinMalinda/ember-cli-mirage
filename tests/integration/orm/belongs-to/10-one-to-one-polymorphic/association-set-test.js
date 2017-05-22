@@ -1,7 +1,7 @@
 import Helper, { states } from './_helper';
 import { module, test } from 'qunit';
 
-module('Integration | ORM | Belongs To | One To One | association #set', {
+module('Integration | ORM | Belongs To | One-to-one Polymorphic | association #set', {
   beforeEach() {
     this.helper = new Helper();
   }
@@ -13,37 +13,37 @@ module('Integration | ORM | Belongs To | One To One | association #set', {
 states.forEach((state) => {
 
   test(`a ${state} can update its association to a saved parent`, function(assert) {
-    let [ user ] = this.helper[state]();
-    let profile = this.helper.savedParent();
+    let [ comment ] = this.helper[state]();
+    let post = this.helper.savedParent();
 
-    user.profile = profile;
+    comment.commentable = post;
 
-    assert.equal(user.profileId, profile.id);
-    assert.deepEqual(user.profile.attrs, profile.attrs);
-    assert.equal(profile.userId, user.id, 'the inverse was set');
-    assert.deepEqual(profile.user.attrs, user.attrs);
+    assert.deepEqual(comment.commentableId, { type: 'post', id: post.id });
+    assert.deepEqual(comment.commentable.attrs, post.attrs);
+    assert.equal(post.commentId, comment.id, 'the inverse was set');
+    assert.deepEqual(post.comment.attrs, comment.attrs);
   });
 
   test(`a ${state} can update its association to a new parent`, function(assert) {
-    let [ user ] = this.helper[state]();
-    let profile = this.helper.newParent();
+    let [ comment ] = this.helper[state]();
+    let post = this.helper.newParent();
 
-    user.profile = profile;
+    comment.commentable = post;
 
-    assert.equal(user.profileId, null);
-    assert.deepEqual(user.profile.attrs, profile.attrs);
+    assert.deepEqual(comment.commentableId, { type: 'post', id: undefined });
+    assert.deepEqual(comment.commentable.attrs, post.attrs);
 
-    assert.equal(profile.userId, user.id, 'the inverse was set');
-    assert.deepEqual(profile.user.attrs, user.attrs);
+    assert.equal(post.commentId, comment.id, 'the inverse was set');
+    assert.deepEqual(post.comment.attrs, comment.attrs);
   });
 
   test(`a ${state} can update its association to a null parent`, function(assert) {
-    let [ user ] = this.helper[state]();
+    let [ comment ] = this.helper[state]();
 
-    user.profile = null;
+    comment.commentable = null;
 
-    assert.equal(user.profileId, null);
-    assert.deepEqual(user.profile, null);
+    assert.equal(comment.commentableId, null);
+    assert.deepEqual(comment.commentable, null);
   });
 
 });

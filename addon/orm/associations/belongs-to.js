@@ -104,6 +104,7 @@ export default class BelongsTo extends Association {
           tempParent = null;
         } else if (id !== undefined) {
           if (association.isPolymorphic) {
+            assert(typeof id === 'object', `You're setting an ID on the polymorphic association '${association.key}' but you didn't pass in an object. Polymorphic IDs need to be in the form { type, id }.`);
             tempParent = association.schema[toCollectionName(id.type)].find(id.id);
           } else {
             tempParent = association.schema[toCollectionName(association.modelName)].find(id);

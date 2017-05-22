@@ -1,7 +1,7 @@
 import Helper, { states } from './_helper';
 import { module, test } from 'qunit';
 
-module('Integration | ORM | Belongs To | One To One | association #new', {
+module('Integration | ORM | Belongs To | One-to-one Polymorphic | association #new', {
   beforeEach() {
     this.helper = new Helper();
   }
@@ -14,20 +14,20 @@ module('Integration | ORM | Belongs To | One To One | association #new', {
 states.forEach((state) => {
 
   test(`a ${state} can build a new associated parent`, function(assert) {
-    let [ user ] = this.helper[state]();
+    let [ comment ] = this.helper[state]();
 
-    let profile = user.newProfile({ age: 300 });
+    let post = comment.newCommentable('post', { age: 300 });
 
-    assert.ok(!profile.id, 'the parent was not persisted');
-    assert.deepEqual(user.profile, profile);
-    assert.equal(user.profileId, null);
-    assert.deepEqual(profile.user, user, 'the inverse was set');
-    assert.equal(profile.userId, user.id);
+    assert.ok(!post.id, 'the parent was not persisted');
+    assert.deepEqual(comment.commentable, post);
+    assert.deepEqual(comment.commentableId, { type: 'post', id: undefined });
+    assert.deepEqual(post.comment, comment, 'the inverse was set');
+    assert.equal(post.commentId, comment.id);
 
-    user.save();
+    comment.save();
 
-    assert.ok(profile.id, 'saving the child persists the parent');
-    assert.equal(user.profileId, profile.id, 'the childs fk was updated');
+    assert.ok(post.id, 'saving the child persists the parent');
+    assert.deepEqual(comment.commentableId, { type: 'post', id: post.id }, 'the childs fk was updated');
   });
 
 });

@@ -1,7 +1,7 @@
 import Helper, { states } from './_helper';
 import { module, test } from 'qunit';
 
-module('Integration | ORM | Belongs To | One To One | association #setId', {
+module('Integration | ORM | Belongs To | One-to-one Polymorphic | association #setId', {
   beforeEach() {
     this.helper = new Helper();
   }
@@ -13,35 +13,35 @@ module('Integration | ORM | Belongs To | One To One | association #setId', {
 states.forEach((state) => {
 
   test(`a ${state} can update its association to a saved parent via parentId`, function(assert) {
-    let [ user ] = this.helper[state]();
-    let profile = this.helper.savedParent();
+    let [ comment ] = this.helper[state]();
+    let post = this.helper.savedParent();
 
-    user.profileId = profile.id;
+    comment.commentableId = { type: 'post', id: post.id };
 
-    assert.equal(user.profileId, profile.id);
-    assert.deepEqual(user.profile.attrs, profile.attrs);
+    assert.deepEqual(comment.commentableId, { type: 'post', id: post.id });
+    assert.deepEqual(comment.commentable.attrs, post.attrs);
 
-    user.save();
-    profile.reload();
+    comment.save();
+    post.reload();
 
-    assert.equal(profile.userId, user.id, 'the inverse was set');
-    assert.deepEqual(profile.user.attrs, user.attrs);
+    assert.equal(post.commentId, comment.id, 'the inverse was set');
+    assert.deepEqual(post.comment.attrs, comment.attrs);
   });
 
 });
 
-// [
-//   'savedChildSavedParent',
-//   'newChildSavedParent'
-// ].forEach((state) => {
-//
-//   test(`a ${state} can clear its association via a null parentId`, function(assert) {
-//     let [ user ] = this.helper[state]();
-//
-//     user.userId = null;
-//
-//     assert.equal(user.userId, null);
-//     assert.equal(user.user, null);
-//   });
-//
-// });
+[
+  'savedChildSavedParent',
+  'newChildSavedParent'
+].forEach((state) => {
+
+  test(`a ${state} can clear its association via a null parentId`, function(assert) {
+    let [ comment ] = this.helper[state]();
+
+    comment.commentableId = null;
+
+    assert.equal(comment.commentableId, null);
+    assert.equal(comment.commentable, null);
+  });
+
+});
